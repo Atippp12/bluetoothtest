@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bluetooth Demo</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 2em; }
+    button { padding: 1em; font-size: 1em; }
+    #status { margin-top: 1em; color: green; }
+  </style>
+</head>
+<body>
+
+  <h1>Web Bluetooth Demo</h1>
+  <p>Click the button below to connect to a Bluetooth device.</p>
+  <button id="connectButton">Connect to Device</button>
+  <p id="status"></p>
+
+  <script>
+    const status = document.getElementById('status');
+    const connectButton = document.getElementById('connectButton');
+
+    connectButton.addEventListener('click', async () => {
+      try {
+        status.textContent = 'Requesting Bluetooth device...';
+
+        const device = await navigator.bluetooth.requestDevice({
+          filters: [{ services: ['battery_service'] }]
+        });
+
+        status.textContent = `✅ Connected to: ${device.name || 'Unnamed device'}`;
+        console.log('Device:', device);
+
+        // Optional: You can now connect to GATT server and read data
+        const server = await device.gatt.connect();
+        const service = await server.getPrimaryService('battery_service');
+        const characteristic = await service.getCharacteristic('battery_level');
+        const value = await characteristic.readValue();
+        const batteryLevel = value.getUint8(0);
+
+        status.textContent += ` | 🔋 Battery Level: ${batteryLevel}%`;
+      } catch (error) {
+        console.error('Error:', error);
+        status.textContent = `❌ Error: ${error.message}`;
+      }
+    });
+  </script>
+
+</body>
+</html>
